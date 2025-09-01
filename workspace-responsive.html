@@ -2,295 +2,607 @@
 <html lang="id">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Responsive Workspace — Desktop & Mobile</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Workspace Hub — Landing → Dashboard → Workspace</title>
 <style>
   :root{
-    --bg:#06121a; --panel:#071827; --muted:#9aa6b2; --accent:#3b82f6; --white:#e6eef6;
-    --left-w:260px; --right-w:360px; --dock-h:76px; --radius:12px;
+    /* Vibrant modern theme */
+    --bg-0: #0b1020;
+    --bg-1: linear-gradient(180deg,#071730 0%,#051124 100%);
+    --card:#071726;
+    --muted:#9fb3c8;
+    --accent-1:#7c3aed;   /* purple */
+    --accent-2:#06b6d4;   /* cyan */
+    --accent-3:#ff6b6b;   /* coral */
+    --glass: rgba(255,255,255,0.04);
+    --radius:14px;
+    --left-w:280px; --right-w:380px; --dock-h:76px;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#041018,#041016);color:var(--white);-webkit-font-smoothing:antialiased;min-height:100vh}
-  .app{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh;gap:12px;padding:12px}
-
-  /* Top header (shared) */
-  header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:10px}
-  .brand{font-weight:700}
-  .nav{display:flex;gap:8px}
-  .nav button{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;color:var(--muted)}
-
-  /* WORKSPACE area: responsive switch */
-  .workspace{
-    display:grid;
-    grid-template-columns: var(--left-w) 1fr var(--right-w);
-    grid-template-rows: 1fr auto; /* canvas & timeline share space */
-    gap:12px;
-    align-items:start;
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:#f4fbff;background:var(--bg-0);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  /* App shell */
+  header.appbar{
+    display:flex;align-items:center;justify-content:space-between;padding:14px 18px;
+    background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.06));
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    position:sticky;top:0;z-index:80;
+    backdrop-filter: blur(6px);
   }
-
-  /* Left panel (Assets, Templates) */
-  .left{
-    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));border-radius:12px;padding:12px;
-    height:calc(100vh - 200px); overflow:auto;
+  .brand{display:flex;flex-direction:column;gap:2px}
+  .brand .title{font-weight:800;color:var(--accent-1);font-size:18px}
+  .brand .subtitle{font-size:12px;color:var(--muted)}
+  nav{display:flex;gap:8px;align-items:center}
+  .nav-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+  .nav-btn.primary{background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:white;border:none;box-shadow:0 6px 18px rgba(7,20,40,0.6)}
+  .breadcrumb{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+  /* layout */
+  .container{display:flex;gap:16px;padding:18px;min-height:calc(100vh - 74px)}
+  .sidebar{width:260px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:12px;color:var(--muted);height:fit-content}
+  .main{flex:1;display:flex;flex-direction:column;gap:14px}
+  .card{background:linear-gradient(180deg,#07182b,#041323);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02);box-shadow:0 8px 30px rgba(4,8,24,0.6)}
+  .muted{color:var(--muted)}
+  .btn{background:linear-gradient(90deg,var(--accent-2),var(--accent-1));border:none;color:white;padding:10px 12px;border-radius:10px;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  /* Workspace layout (desktop) */
+  .workspace-layout{display:grid;grid-template-columns:var(--left-w) 1fr var(--right-w);gap:12px;align-items:start}
+  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:12px}
+  .assets{display:flex;flex-direction:column;gap:8px;height:calc(100vh - 220px);overflow:auto}
+  .asset-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.02)}
+  .canvas-wrap{display:flex;flex-direction:column;gap:10px}
+  .canvas{background:linear-gradient(180deg,#052033,#02101a);border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;box-shadow:0 16px 40px rgba(2,6,23,0.6)}
+  .canvas.aspect{aspect-ratio:16/9}
+  .canvas .placeholder{color:var(--muted);text-align:center;padding:18px}
+  .canvas .control-top{position:absolute;top:12px;left:12px;display:flex;gap:8px}
+  .canvas .control-top .chip{background:linear-gradient(90deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:6px 10px;border-radius:999px;color:var(--muted);font-weight:600}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px}
+  .mini-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:999px;color:var(--muted);font-weight:700}
+  /* timeline */
+  .timeline{grid-column:1/4;background:linear-gradient(180deg,#021623,#011216);padding:12px;border-radius:12px;display:flex;flex-direction:column;gap:10px}
+  .tracks{display:flex;flex-direction:column;gap:8px}
+  .track{display:flex;align-items:center;gap:8px}
+  .track-label{width:64px;color:var(--muted);font-size:13px}
+  .track-clips{flex:1;display:flex;gap:8px;align-items:center}
+  .clip{min-width:140px;height:44px;border-radius:10px;padding:8px;color:white;font-weight:800;display:flex;align-items:center;justify-content:center;position:relative}
+  .clip.video{background:linear-gradient(90deg,#4f46e5,#06b6d4)}
+  .clip.audio{background:linear-gradient(90deg,#ff7a59,#ffb38a)}
+  .playhead{position:absolute;width:12px;height:12px;background:var(--accent-3);border-radius:50%;left:20%}
+  /* inspector */
+  .inspector{display:flex;flex-direction:column;gap:10px;overflow:auto;height:calc(100vh - 220px)}
+  .inspector .section{padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02))}
+  .inspector h4{margin:6px 0;color:var(--accent-1)}
+  /* mobile adjustments */
+  @media(max-width:900px){
+    .container{padding:12px}
+    .sidebar{display:none}
+    .workspace-layout{grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:12px}
+    .inspector{display:none} /* inspector becomes slide-in */
+    .timeline{order:3;height:140px}
+    .canvas{aspect-ratio:16/9;width:100%}
+    .mobile-dock{position:fixed;left:12px;right:12px;bottom:12px;height:var(--dock-h);background:linear-gradient(90deg,var(--accent-1),var(--accent-2));border-radius:14px;display:flex;align-items:center;justify-content:space-around;padding:10px;z-index:120;box-shadow:0 12px 30px rgba(4,8,24,0.6)}
+    .mobile-feature-row{display:flex;gap:8px;overflow:auto;padding-top:8px}
+    .feature-card{min-width:120px;padding:10px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.02)}
   }
-  .left h4{margin:0 0 8px 0}
-  .asset-list{display:grid;gap:8px}
-
-  /* Canvas center */
-  .center{
-    background:transparent; display:flex;flex-direction:column;gap:8px;
-    min-height:320px;
-  }
-  .canvas{
-    background:#071827;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
-    aspect-ratio:16/9;
-  }
-  .canvas .hint{color:var(--muted);text-align:center}
-
-  /* Right inspector */
-  .right{
-    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));border-radius:12px;padding:12px;
-    height:calc(100vh - 200px); overflow:auto;
-  }
-
-  /* Timeline bottom spanning columns */
-  .timeline{
-    grid-column: 1 / -1;
-    background:linear-gradient(180deg,#061018,#041018);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;
-  }
-  .scrub-line{height:8px;background:rgba(255,255,255,0.03);border-radius:8px;position:relative;overflow:hidden}
-  .playhead{position:absolute;left:20%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:var(--accent);border-radius:50%}
-
-  /* Bottom dock for quick actions (desktop shows small dock, mobile shows larger) */
-  .dock{display:flex;gap:8px;align-items:center}
-  .dock button{background:transparent;border:none;color:var(--white);display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 10px;border-radius:8px}
-  .dock .label{font-size:12px;color:var(--muted)}
-
-  /* Mobile behavior: collapse left/right, inspector slide-in, dock fixed bottom */
-  @media(max-width:899px){
-    .workspace{
-      grid-template-columns: 1fr;
-      grid-template-rows: auto auto auto;
-    }
-    .left, .right{display:none} /* hidden on mobile; accessible via modals/slide-ins */
-    .timeline{order:3;height:120px;border-radius:12px;padding:10px}
-    /* Fixed bottom dock for thumb reach */
-    .mobile-dock{position:fixed;left:12px;right:12px;bottom:12px;height:var(--dock-h);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.3));border-radius:14px;display:flex;align-items:center;justify-content:space-around;padding:8px;z-index:40}
-  }
-
-  /* Inspector slide-in (mobile) */
-  .inspector-panel{position:fixed;right:12px;top:8%;width:88%;max-width:420px;height:84%;background:linear-gradient(180deg,#071827,#061421);border-radius:12px;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,0.6);transform:translateX(110%);transition:transform .28s ease;z-index:60}
-  .inspector-panel.open{transform:translateX(0)}
-  /* media/left modal */
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:50}
-  .modal{width:92%;max-width:720px;background:#061421;border-radius:12px;padding:12px;color:var(--white)}
-
-  /* small utilities */
-  .muted{color:var(--muted);font-size:13px}
-  .btn{background:var(--accent);border:none;color:white;padding:8px 10px;border-radius:8px}
-  .action{background:rgba(255,255,255,0.02);padding:6px;border-radius:8px;color:var(--muted);font-size:13px}
+  /* modals/panels */
+  .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:140}
+  .modal{width:94%;max-width:720px;background:#071827;border-radius:12px;padding:14px;color:white;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
+  .slide-panel{position:fixed;right:12px;top:8%;width:92%;max-width:420px;height:82%;background:linear-gradient(180deg,#071827,#04101a);border-radius:12px;padding:12px;transform:translateX(110%);transition:transform .28s ease;z-index:150}
+  .slide-panel.open{transform:translateX(0)}
+  /* small */
+  .small{font-size:13px;color:var(--muted)}
+  .kicker{font-weight:700;color:var(--accent-2)}
 </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="brand">Workspace Hub</div>
-      <div class="nav">
-        <button id="btnDashboard">Dashboard</button>
-        <button id="btnVideo">Video</button>
-        <button id="btnPhoto">Photo</button>
-        <button id="btnLogo">Logo</button>
+  <header class="appbar" role="banner" aria-label="Top bar">
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="brand">
+        <div class="title">Workspace Hub</div>
+        <div class="subtitle">Landing → Dashboard → Workspace</div>
       </div>
-    </header>
+      <div class="breadcrumb" aria-hidden="false" style="margin-left:14px">
+        <div class="small">Landing</div> <div class="small">›</div>
+        <div class="small">Dashboard</div> <div class="small">›</div>
+        <div class="small">Workspace</div>
+      </div>
+    </div>
 
-    <!-- Workspace container -->
-    <main id="workspace" class="workspace" role="main">
-      <!-- LEFT (Assets) -->
-      <aside class="left" id="leftPanel">
-        <h4>Assets</h4>
-        <div class="muted">Recent</div>
-        <div class="asset-list" id="assets">
-          <div class="action">Video_01.mp4</div>
-          <div class="action">Clip_B-roll.mp4</div>
-          <div class="action">Photo_01.jpg</div>
-          <div class="action">Music_Loop.mp3</div>
+    <nav>
+      <button class="nav-btn" data-route="landing">Landing</button>
+      <button class="nav-btn" data-route="dashboard">Dashboard</button>
+      <button class="nav-btn primary" data-route="workspaces">Open Workspace</button>
+      <button class="nav-btn" id="profileBtn">Profile</button>
+      <button class="nav-btn" id="billingBtn">Premium</button>
+    </nav>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar" id="leftSidebar">
+      <div class="card">
+        <strong>Projects</strong>
+        <div class="muted small">Recent & pinned</div>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+          <div class="asset-item">Promo Reel <span class="small muted">Video</span></div>
+          <div class="asset-item">Social Post <span class="small muted">Photo</span></div>
+          <div class="asset-item">Brand Kit <span class="small muted">Logo</span></div>
         </div>
-        <div style="height:12px"></div>
-        <div class="action">Templates</div>
-        <div style="height:8px"></div>
-        <div class="action">Effects</div>
-      </aside>
+        <div style="margin-top:12px">
+          <button class="btn" id="newProject">New Project</button>
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <div class="card">
+        <strong>Account</strong>
+        <div class="muted small">projectmydsrt-bro</div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="ghost">Settings</button>
+          <button class="ghost">Help</button>
+        </div>
+      </div>
+    </aside>
 
-      <!-- CENTER (Canvas) -->
-      <section class="center">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <strong id="pageTitle">Video Workspace</strong><div class="muted" id="projectMeta">Project • 00:12</div>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button class="action" id="openMediaBtn">Open Media</button>
-            <button class="action" id="openInspectorBtn">Inspector</button>
+    <main class="main" id="mainArea">
+      <!-- Landing -->
+      <section id="landing" class="page" aria-live="polite">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <h1 style="margin:0;color:var(--accent-1)">Selamat datang di Workspace Hub</h1>
+              <p class="muted">Satu tempat mengelola project & membuka workspace untuk Video, Photo, dan Logo.</p>
+            </div>
+            <div>
+              <button class="btn" data-route="dashboard">Go to Dashboard</button>
+            </div>
           </div>
         </div>
 
-        <div class="canvas" id="canvas" aria-label="Preview area">
-          <div>
-            <div class="hint">PREVIEW</div>
-            <div class="muted" style="text-align:center;margin-top:6px">Tap to show controls • Double-click to split (desktop) • Swipe up timeline (mobile)</div>
+        <div class="grid" style="margin-top:12px">
+          <div class="card">
+            <h3 style="margin:0;color:var(--accent-2)">Why Workspace Hub?</h3>
+            <p class="muted small">Fast edits, AI tools, and multi-workspace flow. Start with Dashboard to choose your project.</p>
+            <div style="margin-top:8px"><button class="ghost" data-route="dashboard">Open Dashboard</button></div>
           </div>
-        </div>
 
-        <!-- Small dock area (desktop shows inside layout; mobile uses fixed dock below) -->
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="dock" id="topDock">
-            <button id="mediaBtn">📁<div class="label muted">Media</div></button>
-            <button id="editBtn">✂️<div class="label muted">Edit</div></button>
-            <button id="textBtn">🅰️<div class="label muted">Text</div></button>
-            <button id="audioBtn">🎵<div class="label muted">Audio</div></button>
+          <div class="card">
+            <h3 style="margin:0;color:var(--accent-3)">Quick Tour</h3>
+            <p class="muted small">Follow: Landing → Dashboard → Workspace. Mobile-first canvas, desktop powerful inspector.</p>
           </div>
-          <div class="muted">Preview: 1080p • Autosave</div>
         </div>
       </section>
 
-      <!-- RIGHT (Inspector) -->
-      <aside class="right" id="rightPanel">
-        <h4>Inspector</h4>
-        <div class="muted">Select a clip to show properties</div>
-        <div style="height:12px"></div>
-        <div class="action">Transform</div>
-        <div style="height:8px"></div>
-        <div class="action">Color / Effects</div>
-        <div style="height:8px"></div>
-        <div class="action">Audio</div>
-      </aside>
-
-      <!-- Timeline (spans full width) -->
-      <div class="timeline" id="timelinePanel">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="muted">Timeline</div>
-          <div style="display:flex;gap:8px">
-            <div class="action" id="expandTimeline">Expand</div>
-            <div class="action" id="closeTimeline">Hide</div>
+      <!-- Dashboard -->
+      <section id="dashboard" class="page" style="display:none">
+        <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h2 style="margin:0;color:var(--accent-1)">Dashboard</h2>
+            <div class="muted small">Projects • Templates • Activity</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="ghost" id="manageTemplates">Templates</button>
+            <button class="btn" id="createProjectBtn">Create Project</button>
           </div>
         </div>
-        <div class="scrub-line" id="scrub">
-          <div class="playhead" id="playhead"></div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="flex:1">
+            <div class="grid" style="margin-top:12px">
+              <div class="card">
+                <h3>Promo Reel</h3>
+                <div class="muted small">Last edited: 3 hours ago</div>
+                <div style="margin-top:8px;display:flex;gap:8px">
+                  <button class="btn openProject" data-project="Promo Reel" data-ws="video">Open Video</button>
+                  <button class="ghost openProject" data-project="Promo Reel" data-ws="photo">Open Photo</button>
+                </div>
+              </div>
+              <div class="card">
+                <h3>Social Post</h3>
+                <div class="muted small">Last edited: 2 days ago</div>
+                <div style="margin-top:8px;display:flex;gap:8px">
+                  <button class="btn openProject" data-project="Social Post" data-ws="photo">Open Photo</button>
+                  <button class="ghost openProject" data-project="Social Post" data-ws="logo">Open Logo</button>
+                </div>
+              </div>
+              <div class="card">
+                <h3>Create New</h3>
+                <p class="muted small">Start from template or blank</p>
+                <div style="margin-top:8px"><button class="btn" id="blankProjectBtn">Blank Project</button></div>
+              </div>
+            </div>
+          </div>
+
+          <aside style="width:320px;display:flex;flex-direction:column;gap:12px">
+            <div class="card">
+              <strong>Premium Plan</strong>
+              <div class="muted small">HQ renders • Cloud AI • Team shares</div>
+              <div style="margin-top:8px;display:flex;gap:8px"><button class="btn" id="upgradeNow">Upgrade</button><button class="ghost" id="comparePlans">Compare</button></div>
+            </div>
+
+            <div class="card">
+              <strong>Profile</strong>
+              <div class="muted small">projectmydsrt-bro</div>
+              <div style="margin-top:8px"><button class="ghost" id="editProfile">Edit Profile</button></div>
+            </div>
+          </aside>
         </div>
-      </div>
+      </section>
+
+      <!-- Workspace selector -->
+      <section id="workspaces" class="page" style="display:none">
+        <div class="card">
+          <h2 style="margin:0;color:var(--accent-2)">Choose Workspace</h2>
+          <p class="muted small">Open an optimized workspace for your content type.</p>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn openWorkspace" data-ws="video">Video Workspace</button>
+            <button class="btn openWorkspace" data-ws="photo">Photo Workspace</button>
+            <button class="btn openWorkspace" data-ws="logo">Logo Workspace</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIDEO Workspace -->
+      <section id="videoWorkspace" class="page" style="display:none">
+        <div class="workspace-layout">
+          <!-- LEFT: Assets & templates -->
+          <div class="panel assets">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <h3 style="margin:0;color:var(--accent-1)">Assets</h3>
+              <div class="small muted">Search • Filter</div>
+            </div>
+            <div style="margin-top:10px" class="muted small">Drag media to timeline or canvas</div>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+              <div class="asset-item">Imported • Clip01 <button class="ghost">Insert</button></div>
+              <div class="asset-item">Stock • Beach.mp4 <button class="ghost">Preview</button></div>
+              <div class="asset-item">Audio • Track01.mp3 <button class="ghost">Insert</button></div>
+            </div>
+            <div style="margin-top:12px" class="small muted">Primary Left Tools</div>
+            <div style="margin-top:8px" class="mini-actions">
+              <div class="pill">Import</div><div class="pill">Bins</div><div class="pill">Templates</div>
+            </div>
+          </div>
+
+          <!-- CENTER: Canvas -->
+          <div class="canvas-wrap">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <h3 style="margin:0;color:var(--accent-2)">Promo Reel — Video</h3>
+                <div class="muted small">Project • 00:12</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="ghost" id="undo">Undo</button>
+                <button class="ghost" id="redo">Redo</button>
+                <button class="btn" id="share">Share</button>
+              </div>
+            </div>
+
+            <div class="canvas aspect" id="videoCanvas" aria-label="Video preview">
+              <div class="placeholder">
+                VIDEO PREVIEW<br><span class="muted small">Tap preview • Double-click (desktop) to open inspector</span>
+              </div>
+              <div class="control-top">
+                <div class="chip">Fit</div><div class="chip">100%</div><div class="chip">Safe</div>
+              </div>
+            </div>
+
+            <div class="toolbar">
+              <div class="mini-actions">
+                <button class="ghost" id="play">Play</button>
+                <button class="ghost" id="cut">Cut</button>
+                <button class="ghost" id="split">Split</button>
+                <button class="ghost" id="speed">Speed</button>
+                <button class="ghost" id="keyframes">Keyframes</button>
+              </div>
+              <div class="small muted">Proxy • GPU accel</div>
+            </div>
+
+            <!-- Mobile stacked feature area (visible on small screens) -->
+            <div class="features-below" id="mobileFeatures" style="display:none">
+              <div class="mobile-feature-row">
+                <div class="feature-card">Auto-cut</div>
+                <div class="feature-card">Bg Remove</div>
+                <div class="feature-card">Auto-caption</div>
+                <div class="feature-card">Super-res</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Inspector -->
+          <aside class="panel inspector">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <h3 style="margin:0">Inspector</h3>
+              <div class="small muted">Contextual</div>
+            </div>
+
+            <div class="section">
+              <h4>Layers</h4>
+              <div class="pill">V1 • Clip01</div>
+              <div class="pill">A1 • Music</div>
+            </div>
+
+            <div class="section">
+              <h4>Transform</h4>
+              <div style="display:flex;gap:8px;margin-top:6px">
+                <div class="pill">Position</div><div class="pill">Scale</div><div class="pill">Rotate</div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h4>Smart Tools</h4>
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+                <button class="ghost" id="bgRemove">Background Remove</button>
+                <button class="ghost" id="autocut">Auto-cut</button>
+                <button class="ghost" id="autocap">Auto-caption</button>
+                <button class="ghost" id="inpaint">Object Remove</button>
+                <button class="ghost" id="superres">Super-res</button>
+                <button class="ghost" id="frameinterp">Frame interp</button>
+              </div>
+              <div class="muted small" style="margin-top:8px">Preview fast → Queue HQ refine (cloud) for final.</div>
+            </div>
+
+            <div class="section">
+              <h4>Audio</h4>
+              <div style="display:flex;gap:8px">
+                <div class="pill">Auto-duck</div><div class="pill">Denoise</div><div class="pill">Separate</div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h4>Collaboration</h4>
+              <div style="display:flex;gap:8px">
+                <button class="ghost" id="comments">Comments</button>
+                <button class="ghost" id="versions">Versions</button>
+                <button class="ghost" id="sharelink">Share link</button>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Timeline (spans full width) -->
+          <div class="timeline" style="grid-column:1/4">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="small muted">Timeline • Multi-track</div>
+              <div style="display:flex;gap:8px">
+                <button class="ghost" id="expand">Expand</button>
+                <button class="btn" id="exportBtn">Export</button>
+              </div>
+            </div>
+
+            <div class="tracks">
+              <div class="track">
+                <div class="track-label">V1</div>
+                <div class="track-clips">
+                  <div class="clip video" id="clip1">Clip01
+                    <div class="playhead" style="left:28%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="track">
+                <div class="track-label">A1</div>
+                <div class="track-clips"><div class="clip audio">Music</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PHOTO Workspace -->
+      <section id="photoWorkspace" class="page" style="display:none">
+        <div class="workspace-layout" style="grid-template-columns:var(--left-w) 1fr">
+          <div class="panel">
+            <h3>Presets & Brushes</h3>
+            <div class="muted small">One-tap filters, masks, retouch</div>
+            <div style="margin-top:10px" class="mini-actions">
+              <div class="pill">Presets</div><div class="pill">Crop</div><div class="pill">Mask</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="canvas aspect" id="photoCanvas">
+              <div class="placeholder">PHOTO CANVAS — Pinch to zoom (mobile)</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+              <div class="mini-actions">
+                <button class="ghost">Crop</button><button class="ghost">Heal</button><button class="ghost">Selective</button>
+              </div>
+              <div class="small muted">Before/After</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOGO Workspace -->
+      <section id="logoWorkspace" class="page" style="display:none">
+        <div class="workspace-layout">
+          <div class="panel">
+            <h3>Assets • Symbols</h3>
+            <div class="muted small">Colors • Fonts • Symbols</div>
+          </div>
+
+          <div>
+            <div class="canvas aspect" id="logoCanvas">
+              <div class="placeholder">VECTOR ARTBOARD — Pen • Shapes • Symbols</div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px" class="small muted">Artboards • Export SVG</div>
+          </div>
+
+          <aside class="panel inspector">
+            <h3>Properties</h3>
+            <div class="muted small">Fill • Stroke • Align • Boolean</div>
+            <div style="margin-top:8px" class="mini-actions"><div class="pill">Export SVG</div><div class="pill">Symbols</div></div>
+          </aside>
+        </div>
+      </section>
     </main>
-
-    <!-- Mobile fixed dock (only visible on small screens) -->
-    <div class="mobile-dock" id="mobileDock" style="display:none">
-      <button id="mMedia">📁<div class="label muted">Media</div></button>
-      <button id="mEdit">✂️<div class="label muted">Edit</div></button>
-      <button id="mText">🅰️<div class="label muted">Text</div></button>
-      <button id="mExport">⤓<div class="label muted">Export</div></button>
-    </div>
-
-    <!-- Footer area (kept minimal) -->
-    <footer style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-      <div class="muted">Workspace Hub • sample prototype</div>
-      <div class="muted">Status: Online • Autosave</div>
-    </footer>
   </div>
 
-  <!-- Inspector slide-in (mobile) -->
-  <div class="inspector-panel" id="inspectorPanel" aria-hidden="true">
-    <h3>Inspector</h3>
-    <div class="muted">Transform</div>
-    <label class="muted">Scale</label>
-    <input type="range" min="10" max="200" value="100" style="width:100%">
-    <div style="height:8px"></div>
-    <label class="muted">Opacity</label>
-    <input type="range" min="0" max="100" value="100" style="width:100%">
-    <div style="height:12px"></div>
-    <div style="display:flex;gap:8px">
-      <button class="action" id="bgRemove">Bg Remove</button>
-      <button class="action" id="dupClip">Duplicate</button>
-    </div>
-    <div style="height:12px"></div>
-    <div style="display:flex;justify-content:flex-end"><button class="btn" id="closeInspectorMobile">Close</button></div>
+  <!-- Mobile dock -->
+  <div class="mobile-dock" id="mobileDock" style="display:none">
+    <button class="nav-btn" id="mMedia">📁</button>
+    <button class="nav-btn" id="mEdit">✂️</button>
+    <button class="nav-btn" id="mText">🅰️</button>
+    <button class="nav-btn" id="mExportMobile">⤓</button>
   </div>
 
-  <!-- Media modal -->
-  <div class="modal-backdrop" id="mediaModal" aria-hidden="true" style="display:none">
-    <div class="modal">
-      <div style="display:flex;justify-content:space-between;align-items:center"><strong>Media Browser</strong><button class="action" id="closeMedia">Close</button></div>
-      <div style="margin-top:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
-        <div class="action">Video_01.mp4</div>
-        <div class="action">Clip_B-roll.mp4</div>
-        <div class="action">Photo_01.jpg</div>
-        <div class="action">Music.mp3</div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn" id="insertMedia">Insert</button></div>
+  <!-- Slide panel / modal elements -->
+  <div class="modal-backdrop" id="modalBackdrop" style="display:none">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
+  <div class="slide-panel" id="inspectorMobile" aria-hidden="true">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong>Inspector</strong>
+      <button class="ghost" id="closeInspectorMobile">Close</button>
+    </div>
+    <div style="margin-top:8px" class="small muted">Transform • Effects • Smart Tools</div>
+    <div style="margin-top:10px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+      <button class="ghost">Scale</button><button class="ghost">Opacity</button>
+      <button class="ghost">Keyframes</button><button class="ghost">Bg Remove</button>
     </div>
   </div>
 
 <script>
-  // Responsiveness helpers: toggle UI pieces by width
-  function applyResponsive() {
-    const mobileDock = document.getElementById('mobileDock');
-    const left = document.getElementById('leftPanel');
-    const right = document.getElementById('rightPanel');
-    if(window.innerWidth <= 899){
+  // Ensure navigation order: Landing -> Dashboard -> Workspaces/Workspace
+  const pages = [...document.querySelectorAll('.page')];
+  function showPage(id){
+    pages.forEach(p => p.id === id ? p.style.display = '' : p.style.display = 'none');
+    // Manage breadcrumb highlight / state if needed (simple)
+    // Close modals/panels
+    closeModal(); closeInspectorMobile();
+    // show/hide mobile dock
+    applyResponsive();
+    // log
+    console.log('navigated to', id);
+  }
+
+  // Hook navigation buttons (top + inline)
+  document.querySelectorAll('[data-route]').forEach(btn=> btn.addEventListener('click', ()=> {
+    const r = btn.getAttribute('data-route');
+    // preserve landing -> dashboard -> workspace order by guiding user:
+    if(r === 'workspaces'){
+      // user intends to open workspace selector: first ensure dashboard visited -> then open workspaces
+      showPage('dashboard');
+      setTimeout(()=> showPage('workspaces'), 250);
+      return;
+    }
+    showPage(r);
+  }));
+
+  // open workspace buttons
+  document.querySelectorAll('.openWorkspace, .openProject').forEach(b=> b.addEventListener('click', (e)=> {
+    const ws = e.currentTarget.dataset.ws || 'video';
+    // enforce order: show dashboard first briefly, then workspace
+    showPage('dashboard');
+    setTimeout(()=> {
+      if(ws === 'video') showPage('videoWorkspace');
+      if(ws === 'photo') showPage('photoWorkspace');
+      if(ws === 'logo') showPage('logoWorkspace');
+      applyResponsive();
+    }, 220);
+  }));
+
+  // Default landing on load; user requested explicit order landing -> dashboard -> workspace
+  window.addEventListener('load', ()=> {
+    const hash = location.hash.replace('#','');
+    if(!hash) showPage('landing');
+    else if(['landing','dashboard','workspaces','videoWorkspace','photoWorkspace','logoWorkspace'].includes(hash)) showPage(hash);
+    else showPage('landing');
+  });
+
+  // Modal helpers
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const modalContent = document.getElementById('modalContent');
+  function openModal(html){
+    modalContent.innerHTML = html;
+    modalBackdrop.style.display = 'flex';
+  }
+  function closeModal(){ modalBackdrop.style.display = 'none'; modalContent.innerHTML = ''; }
+  modalBackdrop.addEventListener('click', (e)=> { if(e.target === modalBackdrop) closeModal(); });
+
+  // Inspector mobile slide panel
+  const inspectorMobile = document.getElementById('inspectorMobile');
+  function openInspectorMobile(){ inspectorMobile.classList.add('open'); inspectorMobile.setAttribute('aria-hidden','false'); }
+  function closeInspectorMobile(){ inspectorMobile.classList.remove('open'); inspectorMobile.setAttribute('aria-hidden','true'); }
+  document.getElementById('closeInspectorMobile').addEventListener('click', closeInspectorMobile);
+  document.getElementById('openMedia')?.addEventListener('click', ()=> openModal('<strong>Media Browser</strong><p class="muted">Import or choose asset</p><div style="margin-top:12px"><button class="btn" onclick="closeModal()">Close</button></div>'));
+
+  // Feature buttons: quick preview then HQ refine pattern
+  ['bgRemove','autocut','autocap','inpaint','superres','frameinterp','duckBtn','denoiseBtn','separateBtn'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('click', (e)=> {
+      const name = e.currentTarget.textContent || 'Tool';
+      openModal(`<strong>${name} — Fast preview</strong><p class="muted">A low-latency preview is generated. For final quality, queue HQ refine (cloud).</p>
+        <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="closeModal();alert('Preview applied (simulated)')">Apply Preview</button><button class="ghost" onclick="closeModal();alert('Queued HQ refine (simulated)')">Queue HQ</button></div>`);
+    });
+  });
+
+  // Timeline expand (desktop)
+  document.getElementById('expand')?.addEventListener('click', ()=> {
+    const tl = document.querySelector('.timeline');
+    if(!tl) return;
+    tl.style.height = tl.style.height === '60vh' ? '' : '60vh';
+    tl.scrollIntoView({behavior:'smooth'});
+  });
+
+  // Clips: long-press -> quick actions
+  document.querySelectorAll('.clip').forEach(c => {
+    let t;
+    c.addEventListener('pointerdown', (e)=> {
+      t = setTimeout(()=> {
+        openModal(`<strong>Quick Actions</strong><p class="muted">Duplicate / Delete / Detach</p><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="closeModal();alert('Duplicate (simulated)')">Duplicate</button><button class="ghost" onclick="closeModal();alert('Delete (simulated)')">Delete</button></div>`);
+      }, 600);
+    });
+    ['pointerup','pointerleave'].forEach(ev => c.addEventListener(ev, ()=> clearTimeout(t)));
+    c.addEventListener('dblclick', ()=> {
+      if(window.innerWidth <= 900) openInspectorMobile(); else openModal('<strong>Inspector (desktop)</strong><p class="muted">Right-side inspector is available on desktop.</p><div style="margin-top:8px"><button class="btn" onclick="closeModal()">Close</button></div>');
+    });
+  });
+
+  // Responsive helpers: show mobile dock & stack features below canvas (mobile only)
+  const mobileDock = document.getElementById('mobileDock');
+  const mobileFeatures = document.getElementById('mobileFeatures');
+  function applyResponsive(){
+    if(window.innerWidth <= 900){
       mobileDock.style.display = 'flex';
-      left.style.display = 'none';
-      right.style.display = 'none';
+      // show mobile stacked features within canvas area
+      if(document.getElementById('videoWorkspace').style.display !== 'none') mobileFeatures.style.display = 'block';
+      // hide inspector panel (desktop)
+      document.querySelectorAll('.inspector').forEach(el => el.style.display = 'none');
     } else {
       mobileDock.style.display = 'none';
-      left.style.display = '';
-      right.style.display = '';
-      // ensure mobile inspector closed
+      mobileFeatures.style.display = 'none';
+      document.querySelectorAll('.inspector').forEach(el => el.style.display = '');
       closeInspectorMobile();
-      closeMedia();
     }
   }
   window.addEventListener('resize', applyResponsive);
   window.addEventListener('load', applyResponsive);
 
-  // Timeline expand/hide
-  const timeline = document.getElementById('timelinePanel');
-  document.getElementById('expandTimeline').addEventListener('click', ()=> {
-    timeline.style.height = (timeline.style.height === '36vh' || !timeline.style.height) ? '48vh' : '36vh';
+  // Simple UI actions
+  document.getElementById('newProject').addEventListener('click', ()=> {
+    openModal('<strong>Create Project</strong><p class="muted">Project created (simulated)</p><div style="margin-top:8px"><button class="btn" onclick="closeModal()">OK</button></div>');
   });
-  document.getElementById('closeTimeline').addEventListener('click', ()=> { timeline.style.display = 'none'; setTimeout(()=> timeline.style.display='flex', 1200); });
 
-  // Mobile inspector open/close
-  const inspectorPanel = document.getElementById('inspectorPanel');
-  function openInspectorMobile(){ inspectorPanel.classList.add('open'); inspectorPanel.setAttribute('aria-hidden','false'); }
-  function closeInspectorMobile(){ inspectorPanel.classList.remove('open'); inspectorPanel.setAttribute('aria-hidden','true'); }
-  document.getElementById('openInspectorBtn').addEventListener('click', ()=> {
-    if(window.innerWidth <= 899) openInspectorMobile();
-    else alert('Inspector visible on right (desktop).');
+  // Profile & Billing
+  document.getElementById('profileBtn').addEventListener('click', ()=> {
+    openModal(`<strong>Profile</strong><p class="muted">projectmydsrt-bro</p><div style="margin-top:8px"><button class="btn" onclick="closeModal()">Close</button></div>`);
   });
-  document.getElementById('openMediaBtn').addEventListener('click', ()=> openMedia());
-  document.getElementById('closeInspectorMobile').addEventListener('click', closeInspectorMobile);
-
-  // Media modal open/close
-  function openMedia(){ const m = document.getElementById('mediaModal'); m.style.display='flex'; m.setAttribute('aria-hidden','false'); }
-  function closeMedia(){ const m = document.getElementById('mediaModal'); m.style.display='none'; m.setAttribute('aria-hidden','true'); }
-  document.getElementById('closeMedia').addEventListener('click', closeMedia);
-  document.getElementById('insertMedia').addEventListener('click', ()=> { closeMedia(); alert('Inserted (simulated)'); });
-
-  // Playhead drag (simple)
-  const playhead = document.getElementById('playhead');
-  const scrub = document.getElementById('scrub');
-  let dragging=false;
-  playhead.addEventListener('pointerdown', e=>{ dragging=true; playhead.setPointerCapture(e.pointerId); });
-  window.addEventListener('pointermove', e=> {
-    if(!dragging) return;
-    const rect = scrub.getBoundingClientRect();
-    let x = Math.max(rect.left, Math.min(rect.right, e.clientX));
-    let pct = (x - rect.left) / rect.width;
-    playhead.style.left = (pct*100) + '%';
+  document.getElementById('billingBtn').addEventListener('click', ()=> {
+    openModal(`<strong>Premium</strong><p class="muted">HQ renders, cloud AI, team features.</p><div style="margin-top:8px"><button class="btn" onclick="closeModal()">Subscribe</button><button class="ghost" onclick="closeModal()">Later</button></div>`);
   });
-  window.addEventListener('pointerup', ()=> dragging=false);
 
-  // Simple navigation for demo
-  document.getElementById('btnDashboard').addEventListener('click', ()=> { alert('Open Dashboard (simulated)'); });
-  document.getElementById('btnVideo').addEventListener('click', ()=> { document.getElementById('pageTitle').textContent='Video Workspace'; });
-  document.getElementById('btnPhoto').addEventListener('click', ()=> { document.getElementById('pageTitle').textContent='Photo Workspace'; });
-  document.getElementById('btnLogo').addEventListener('click', ()=> { document.getElementById('pageTitle').textContent='Logo Workspace'; });
+  // Export flow
+  document.getElementById('exportBtn')?.addEventListener('click', ()=> {
+    openModal(`<strong>Export</strong><p class="muted">Quick export (local) or HQ render (cloud).</p><div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="closeModal();alert('Quick export started (simulated)')">Quick Export</button><button class="ghost" onclick="closeModal();alert('HQ export queued (simulated)')">Queue HQ</button></div>`);
+  });
+
+  // keyboard shortcuts (desktop)
+  window.addEventListener('keydown', (e)=> {
+    if(e.key === 'Escape') closeModal();
+    if(e.key === 'd') showPage('dashboard');
+    if(e.key === 'l') showPage('landing');
+  });
 </script>
 </body>
-</html>
+              </html>
