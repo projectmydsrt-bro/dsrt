@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Responsive Workspace — Desktop & Mobile</title>
+<style>
+  :root{
+    --bg:#06121a; --panel:#071827; --muted:#9aa6b2; --accent:#3b82f6; --white:#e6eef6;
+    --left-w:260px; --right-w:360px; --dock-h:76px; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#041018,#041016);color:var(--white);-webkit-font-smoothing:antialiased;min-height:100vh}
+  .app{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh;gap:12px;padding:12px}
+
+  /* Top header (shared) */
+  header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:10px}
+  .brand{font-weight:700}
+  .nav{display:flex;gap:8px}
+  .nav button{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;color:var(--muted)}
+
+  /* WORKSPACE area: responsive switch */
+  .workspace{
+    display:grid;
+    grid-template-columns: var(--left-w) 1fr var(--right-w);
+    grid-template-rows: 1fr auto; /* canvas & timeline share space */
+    gap:12px;
+    align-items:start;
+  }
+
+  /* Left panel (Assets, Templates) */
+  .left{
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));border-radius:12px;padding:12px;
+    height:calc(100vh - 200px); overflow:auto;
+  }
+  .left h4{margin:0 0 8px 0}
+  .asset-list{display:grid;gap:8px}
+
+  /* Canvas center */
+  .center{
+    background:transparent; display:flex;flex-direction:column;gap:8px;
+    min-height:320px;
+  }
+  .canvas{
+    background:#071827;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+    aspect-ratio:16/9;
+  }
+  .canvas .hint{color:var(--muted);text-align:center}
+
+  /* Right inspector */
+  .right{
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));border-radius:12px;padding:12px;
+    height:calc(100vh - 200px); overflow:auto;
+  }
+
+  /* Timeline bottom spanning columns */
+  .timeline{
+    grid-column: 1 / -1;
+    background:linear-gradient(180deg,#061018,#041018);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;
+  }
+  .scrub-line{height:8px;background:rgba(255,255,255,0.03);border-radius:8px;position:relative;overflow:hidden}
+  .playhead{position:absolute;left:20%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:var(--accent);border-radius:50%}
+
+  /* Bottom dock for quick actions (desktop shows small dock, mobile shows larger) */
+  .dock{display:flex;gap:8px;align-items:center}
+  .dock button{background:transparent;border:none;color:var(--white);display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 10px;border-radius:8px}
+  .dock .label{font-size:12px;color:var(--muted)}
+
+  /* Mobile behavior: collapse left/right, inspector slide-in, dock fixed bottom */
+  @media(max-width:899px){
+    .workspace{
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+    }
+    .left, .right{display:none} /* hidden on mobile; accessible via modals/slide-ins */
+    .timeline{order:3;height:120px;border-radius:12px;padding:10px}
+    /* Fixed bottom dock for thumb reach */
+    .mobile-dock{position:fixed;left:12px;right:12px;bottom:12px;height:var(--dock-h);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.3));border-radius:14px;display:flex;align-items:center;justify-content:space-around;padding:8px;z-index:40}
+  }
+
+  /* Inspector slide-in (mobile) */
+  .inspector-panel{position:fixed;right:12px;top:8%;width:88%;max-width:420px;height:84%;background:linear-gradient(180deg,#071827,#061421);border-radius:12px;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,0.6);transform:translateX(110%);transition:transform .28s ease;z-index:60}
+  .inspector-panel.open{transform:translateX(0)}
+  /* media/left modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal{width:92%;max-width:720px;background:#061421;border-radius:12px;padding:12px;color:var(--white)}
+
+  /* small utilities */
+  .muted{color:var(--muted);font-size:13px}
+  .btn{background:var(--accent);border:none;color:white;padding:8px 10px;border-radius:8px}
+  .action{background:rgba(255,255,255,0.02);padding:6px;border-radius:8px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">Workspace Hub</div>
+      <div class="nav">
+        <button id="btnDashboard">Dashboard</button>
+        <button id="btnVideo">Video</button>
+        <button id="btnPhoto">Photo</button>
+        <button id="btnLogo">Logo</button>
+      </div>
+    </header>
+
+    <!-- Workspace container -->
+    <main id="workspace" class="workspace" role="main">
+      <!-- LEFT (Assets) -->
+      <aside class="left" id="leftPanel">
+        <h4>Assets</h4>
+        <div class="muted">Recent</div>
+        <div class="asset-list" id="assets">
+          <div class="action">Video_01.mp4</div>
+          <div class="action">Clip_B-roll.mp4</div>
+          <div class="action">Photo_01.jpg</div>
+          <div class="action">Music_Loop.mp3</div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="action">Templates</div>
+        <div style="height:8px"></div>
+        <div class="action">Effects</div>
+      </aside>
+
+      <!-- CENTER (Canvas) -->
+      <section class="center">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <strong id="pageTitle">Video Workspace</strong><div class="muted" id="projectMeta">Project • 00:12</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="action" id="openMediaBtn">Open Media</button>
+            <button class="action" id="openInspectorBtn">Inspector</button>
+          </div>
+        </div>
+
+        <div class="canvas" id="canvas" aria-label="Preview area">
+          <div>
+            <div class="hint">PREVIEW</div>
+            <div class="muted" style="text-align:center;margin-top:6px">Tap to show controls • Double-click to split (desktop) • Swipe up timeline (mobile)</div>
+          </div>
+        </div>
+
+        <!-- Small dock area (desktop shows inside layout; mobile uses fixed dock below) -->
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="dock" id="topDock">
+            <button id="mediaBtn">📁<div class="label muted">Media</div></button>
+            <button id="editBtn">✂️<div class="label muted">Edit</div></button>
+            <button id="textBtn">🅰️<div class="label muted">Text</div></button>
+            <button id="audioBtn">🎵<div class="label muted">Audio</div></button>
+          </div>
+          <div class="muted">Preview: 1080p • Autosave</div>
+        </div>
+      </section>
+
+      <!-- RIGHT (Inspector) -->
+      <aside class="right" id="rightPanel">
+        <h4>Inspector</h4>
+        <div class="muted">Select a clip to show properties</div>
+        <div style="height:12px"></div>
+        <div class="action">Transform</div>
+        <div style="height:8px"></div>
+        <div class="action">Color / Effects</div>
+        <div style="height:8px"></div>
+        <div class="action">Audio</div>
+      </aside>
+
+      <!-- Timeline (spans full width) -->
+      <div class="timeline" id="timelinePanel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="muted">Timeline</div>
+          <div style="display:flex;gap:8px">
+            <div class="action" id="expandTimeline">Expand</div>
+            <div class="action" id="closeTimeline">Hide</div>
+          </div>
+        </div>
+        <div class="scrub-line" id="scrub">
+          <div class="playhead" id="playhead"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Mobile fixed dock (only visible on small screens) -->
+    <div class="mobile-dock" id="mobileDock" style="display:none">
+      <button id="mMedia">📁<div class="label muted">Media</div></button>
+      <button id="mEdit">✂️<div class="label muted">Edit</div></button>
+      <button id="mText">🅰️<div class="label muted">Text</div></button>
+      <button id="mExport">⤓<div class="label muted">Export</div></button>
+    </div>
+
+    <!-- Footer area (kept minimal) -->
+    <footer style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+      <div class="muted">Workspace Hub • sample prototype</div>
+      <div class="muted">Status: Online • Autosave</div>
+    </footer>
+  </div>
+
+  <!-- Inspector slide-in (mobile) -->
+  <div class="inspector-panel" id="inspectorPanel" aria-hidden="true">
+    <h3>Inspector</h3>
+    <div class="muted">Transform</div>
+    <label class="muted">Scale</label>
+    <input type="range" min="10" max="200" value="100" style="width:100%">
+    <div style="height:8px"></div>
+    <label class="muted">Opacity</label>
+    <input type="range" min="0" max="100" value="100" style="width:100%">
+    <div style="height:12px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="action" id="bgRemove">Bg Remove</button>
+      <button class="action" id="dupClip">Duplicate</button>
+    </div>
+    <div style="height:12px"></div>
+    <div style="display:flex;justify-content:flex-end"><button class="btn" id="closeInspectorMobile">Close</button></div>
+  </div>
+
+  <!-- Media modal -->
+  <div class="modal-backdrop" id="mediaModal" aria-hidden="true" style="display:none">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center"><strong>Media Browser</strong><button class="action" id="closeMedia">Close</button></div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+        <div class="action">Video_01.mp4</div>
+        <div class="action">Clip_B-roll.mp4</div>
+        <div class="action">Photo_01.jpg</div>
+        <div class="action">Music.mp3</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn" id="insertMedia">Insert</button></div>
+    </div>
+  </div>
+
+<script>
+  // Responsiveness helpers: toggle UI pieces by width
+  function applyResponsive() {
+    const mobileDock = document.getElementById('mobileDock');
+    const left = document.getElementById('leftPanel');
+    const right = document.getElementById('rightPanel');
+    if(window.innerWidth <= 899){
+      mobileDock.style.display = 'flex';
+      left.style.display = 'none';
+      right.style.display = 'none';
+    } else {
+      mobileDock.style.display = 'none';
+      left.style.display = '';
+      right.style.display = '';
+      // ensure mobile inspector closed
+      closeInspectorMobile();
+      closeMedia();
+    }
+  }
+  window.addEventListener('resize', applyResponsive);
+  window.addEventListener('load', applyResponsive);
+
+  // Timeline expand/hide
+  const timeline = document.getElementById('timelinePanel');
+  document.getElementById('expandTimeline').addEventListener('click', ()=> {
+    timeline.style.height = (timeline.style.height === '36vh' || !timeline.style.height) ? '48vh' : '36vh';
+  });
+  document.getElementById('closeTimeline').addEventListener('click', ()=> { timeline.style.display = 'none'; setTimeout(()=> timeline.style.display='flex', 1200); });
+
+  // Mobile inspector open/close
+  const inspectorPanel = document.getElementById('inspectorPanel');
+  function openInspectorMobile(){ inspectorPanel.classList.add('open'); inspectorPanel.setAttribute('aria-hidden','false'); }
+  function closeInspectorMobile(){ inspectorPanel.classList.remove('open'); inspectorPanel.setAttribute('aria-hidden','true'); }
+  document.getElementById('openInspectorBtn').addEventListener('click', ()=> {
+    if(window.innerWidth <= 899) openInspectorMobile();
+    else alert('Inspector visible on right (desktop).');
+  });
+  document.getElementById('openMediaBtn').addEventListener('click', ()=> openMedia());
+  document.getElementById('closeInspectorMobile').addEventListener('click', closeInspectorMobile);
+
+  // Media modal open/close
+  function openMedia(){ const m = document.getElementById('mediaModal'); m.style.display='flex'; m.setAttribute('aria-hidden','false'); }
+  function closeMedia(){ const m = document.getElementById('mediaModal'); m.style.display='none'; m.setAttribute('aria-hidden','true'); }
+  document.getElementById('closeMedia').addEventListener('click', closeMedia);
+  document.getElementById('insertMedia').addEventListener('click', ()=> { closeMedia(); alert('Inserted (simulated)'); });
+
+  // Playhead drag (simple)
+  const playhead = document.getElementById('playhead');
+  const scrub = document.getElementById('scrub');
+  let dragging=false;
+  playhead.addEventListener('pointerdown', e=>{ dragging=true; playhead.setPointerCapture(e.pointerId); });
+  window.addEventListener('pointermove', e=> {
+    if(!dragging) return;
+    const rect = scrub.getBoundingClientRect();
+    let x = Math.max(rect.left, Math.min(rect.right, e.clientX));
+    let pct = (x - rect.left) / rect.width;
+    playhead.style.left = (pct*100) + '%';
+  });
+  window.addEventListener('pointerup', ()=> dragging=false);
+
+  // Simple navigation for demo
+  document.getElementById('btnDashboard').addEventListener('click', ()=> { alert('Open Dashboard (simulated)'); });
+  document.getElementById('btnVideo').addEventListener('click', ()=> { document.getElementById('pageTitle').textContent='Video Workspace'; });
+  document.getElementById('btnPhoto').addEventListener('click', ()=> { document.getElementById('pageTitle').textContent='Photo Workspace'; });
+  document.getElementById('btnLogo').addEventListener('click', ()=> { document.getElementById('pageTitle').textContent='Logo Workspace'; });
+</script>
+</body>
+</html>
